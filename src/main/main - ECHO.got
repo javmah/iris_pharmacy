@@ -1,0 +1,453 @@
+package main
+
+import (
+	"crypto/md5"
+	"database/sql"
+	"encoding/hex"
+	"fmt"
+	"html/template"
+	"io"
+	"log"
+	"net/http"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	// Sql Add On
+	// "database/sql"
+	_ "github.com/go-sql-driver/mysql"
+	// Validtor
+	// Session
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
+)
+
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+// Help for Static Server
+// https://echo.labstack.com/guide/static-files
+
+func main() {
+	// Echo instance
+	e := echo.New()
+
+	// Template Starts
+	renderer := &Template{
+		templates: template.Must(template.ParseGlob("templates/*.html")),
+	}
+	e.Renderer = renderer
+	// Static Files Stsrts
+	// e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	// 	Root:   "/static",
+	// 	Browse: true,
+	// }))
+	// e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	// 	Root: "static",
+	// }))
+
+	// e.Static("/lol", "assets") //Working Copy
+	e.Static("/", "assets")
+	// Template Ends
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Not Found Handeler Starts  ############################################
+
+	echo.NotFoundHandler = func(c echo.Context) error {
+		// render your 404 page
+		//For Help ::   https://github.com/labstack/echo/issues/406
+		// fmt.Println("ERR :: Custom Cheack :", c.Request().URL)
+
+		return c.Render(http.StatusNotFound, "page_404.html", map[string]interface{}{
+			"unknownurl": c.Request().URL,
+		})
+	}
+
+	// Not Found Handeler Starts  ###############################################
+
+	// 1. Routes
+	e.GET("/", hello)
+	// 2. Routes
+	e.GET("/signin", signin)
+	// 3.  Dashboard
+	e.GET("/dashboard", dashboard)
+	// 4. For ADD a User
+	e.GET("/users", user)
+	// 5. For ADD a User
+	e.GET("/add-user", adduserRouter)
+	// 6. Product
+	e.GET("/products", product)
+	// 7. Add-product
+	e.GET("/add-product", addproduct)
+	// 8. Orders
+	e.GET("/orders", orders)
+	// 9. create-order
+	e.GET("/create-order", createorder)
+	//10. inventory
+	e.GET("/inventory", inventory)
+	//11. Reports
+	e.GET("/reports", reports)
+	//12. Settings
+	e.GET("/settings", settings)
+
+	// Form Submit handalert Registration
+	e.POST("/adduserformproc", adduserformproc)
+	//Login validation
+	e.POST("/loginval", loginvalidation)
+	// Session
+	// e.GET("/settings", settings)
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
+
+	// Start server
+	e.Logger.Fatal(e.Start(":8085"))
+
+}
+
+// Handler
+func hello(c echo.Context) error {
+	return c.HTML(http.StatusOK, " <a href='signin'> Sign In  </a> <br> <a href='dashboard'> Dashboard  </a> <br> <a href='user'> user </a>  <br> <a href='add-user'> add user  </a>  <br> <a href='product'> product   </a>  <br> <a href='add-product'> Add Product   </a>  ")
+}
+
+func login(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "hmm.html", map[string]interface{}{
+		"name": "Dolly!",
+	})
+
+	// see User Name & Password Preste
+
+	// if had  Cheack from Databse
+
+	// craet Cooky
+
+	// Redirect User to Home Page
+
+}
+
+//  Routs Started Here .
+
+func signin(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "login.html", nil)
+}
+
+func dashboard(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "index.html", nil)
+}
+
+func user(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "users.html", nil)
+}
+
+func adduserRouter(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	status := c.QueryParam("msg")
+	// datatype := c.Param("data")
+
+	return c.Render(http.StatusOK, "add-user.html", map[string]interface{}{
+		"msg": status,
+	})
+
+}
+
+func product(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "products.html", nil)
+}
+
+func addproduct(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "add-product.html", nil)
+}
+
+func orders(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "orders.html", nil)
+}
+
+func createorder(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "create-order.html", nil)
+}
+
+func inventory(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "inventory.html", nil)
+}
+
+func reports(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "reports.html", nil)
+}
+
+func settings(c echo.Context) error {
+	// return c.String(http.StatusOK, "Hello From Login Router !")
+	return c.Render(http.StatusOK, "settings.html", nil)
+}
+
+// Rout Ends Here
+// ##################################################### Helper Functions Starts From Heare  #############################################################
+// helper functions Starts From heare
+
+// type adduserdata struct {
+// 	FirstName   string
+// 	LastName    string
+// 	MiddleName  string
+// 	Gender      string
+// 	Dob         string
+// 	Designation string
+// 	Area        string
+// 	Postcode    string
+// 	Username    string
+// 	Password    string
+// }
+
+// Add User function
+func adduserformproc(c echo.Context) error {
+	// firstName := c.FormValue("first-name")
+	// lastName := c.FormValue("last-name")
+	// middleName := c.FormValue("middle-name")
+	// //
+	// gender := c.FormValue("gender")
+	// dob := c.FormValue("birthday")
+	// designation := c.FormValue("designation")
+	// area := c.FormValue("area")
+	// postcode := c.FormValue("postcode")
+	// username := c.FormValue("username")
+	// password := c.FormValue("password")
+	//
+
+	// post := &adduserdata{
+	// 	FirstName:   c.FormValue("first-name"),
+	// 	LastName:    c.FormValue("last-name"),
+	// 	MiddleName:  c.FormValue("middle-name"),
+	// 	Gender:      c.FormValue("gender"),
+	// 	Dob:         c.FormValue("birthday"),
+	// 	Designation: c.FormValue("designation"),
+	// 	Area:        c.FormValue("area"),
+	// 	Postcode:    c.FormValue("postcode"),
+	// 	Username:    c.FormValue("username"),
+	// 	Password:    c.FormValue("password"),
+	// }
+
+	// post := &adduserdata{
+	// 	FirstName: "javed	",
+	// 	LastName:    "Quayyum",
+	// 	MiddleName:  "Mahmud",
+	// 	Gender:      "Male",
+	// 	Dob:         "22/09/1986",
+	// 	Designation: "Admin",
+	// 	Area:        "Mirpur",
+	// 	Postcode:    "1216",
+	// 	Username:    "javed",
+	// 	Password:    "123456",
+	// }
+
+	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/medicine")
+
+	if err != nil {
+		fmt.Println("Hmm err :", err.Error())
+	} else {
+		stmtIns, qperr := db.Prepare("INSERT INTO user SET FirstName =? , LastName =? , MiddleName =? ,Gender =?, Dob =? ,Designation =? ,Area =?,Postcode =?,Username =?, Password =?")
+		if qperr != nil {
+			panic(qperr.Error())
+		}
+
+		// hashe Passwoard starts
+		h := md5.New()
+		h.Write([]byte("khaled mahmud "))
+		hashedPass := hex.EncodeToString(h.Sum(nil))
+		// hashe Passwoard Ends
+
+		// _, exerr := stmtIns.Exec("javed", "Quayyum", "Mahmud", "Male", "22/09/1986", "Admin", "Mirpur", "1216", "javed", "123456")
+
+		_, exerr := stmtIns.Exec(
+			c.FormValue("first-name"),
+			c.FormValue("last-name"),
+			c.FormValue("middle-name"),
+			c.FormValue("gender"),
+			c.FormValue("birthday"),
+			c.FormValue("designation"),
+			c.FormValue("area"),
+			c.FormValue("postcode"),
+			c.FormValue("username"),
+			hashedPass,
+		)
+
+		if exerr != nil {
+			panic(exerr.Error())
+		}
+
+	}
+	defer db.Close()
+	return c.Redirect(303, "/add-user?msg=success")
+	// redirect Ends
+	// return c.String(http.StatusOK, "what up Man ?")
+}
+
+// login user Function
+func loginvalidation(c echo.Context) error {
+	// User name And Passwoard
+	Username := c.FormValue("Username")
+	Password := c.FormValue("Password")
+	fmt.Println(Username)
+	fmt.Println(Password)
+
+	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/medicine")
+	if err != nil {
+		fmt.Println("Error On Connection :", err.Error())
+	}
+
+	// 1st Way
+
+	// stmtIns, qperr := db.Prepare("SELECT FROM user where id=?")
+	// id := 1
+	// hmm, qperr := stmtIns.Exec(id)
+	// if qperr != nil {
+	// 	fmt.Println("Error On Execution :", qperr.Error())
+	// }
+	// affect, err := hmm.RowsAffected()
+	// fmt.Println("Number of Effected Rows :", affect)
+
+	// 2nd Way
+	// rows, err := db.Query("SELECT * FROM user")
+	// var i = 0
+	// for rows.Next() {
+	// 	var id int
+	// 	var FirstName string
+	// 	var LastName string
+	// 	var MiddleName string
+	// 	var Gender string
+	// 	var Dob string
+	// 	var Designation string
+	// 	var Area string
+	// 	var Postcode string
+	// 	var Username string
+	// 	var Password string
+
+	// 	err = rows.Scan(&id, &FirstName, &LastName, MiddleName, Gender, Dob, Designation, Area, Postcode, Username, Password)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// 	// fmt.Println(i, FirstName, "|", LastName)
+	// 	i++
+	// }
+
+	// 3rd Way to Get The Effected Row
+	// stmt, err := db.Prepare("SELECT * FROM user WHERE (Username = ? AND Password = ?)")
+	// stmt, err := db.Prepare("SELECT * FROM user ")
+	// stmt, err := db.Prepare("delete from user where id=?")
+
+	// if err != nil {
+	// 	fmt.Println("Error in Query Preparation :", err)
+	// }
+
+	// // res, err2 := stmt.Exec("javed", "1234568945")
+	// res, err2 := stmt.Exec("1")
+
+	// if err2 != nil {
+	// 	fmt.Println("Error in Query Execution :", err2)
+	// }
+
+	// affect, err := res.RowsAffected()
+	// println("Effected Number of Rows :", affect)
+
+	// 4th Way  // Working
+	// rows, err := db.Query("SELECT COUNT(*) as count FROM user WHERE (Username=? AND Password=?) ", "javed", "123456")
+	// if err != nil {
+	// 	println("ERROR : ", rows)
+	// 	log.Fatal(err)
+	// }
+
+	// for rows.Next() {
+	// 	var hmm string
+	// 	rows.Scan(&hmm)
+	// 	fmt.Println("what is it ", hmm)
+	// }
+
+	type creadintial struct {
+		username string
+		passwoar string
+	}
+
+	//  5th Way
+
+	var numberOfrowEffected int
+	rows, err := db.Prepare("SELECT COUNT(*) as count FROM user WHERE (Username=? AND Password=?) ")
+	rows.QueryRow("javed", "123456").Scan(&numberOfrowEffected)
+
+	if err != nil {
+		println("ERROR : ", rows)
+		log.Fatal(err)
+	}
+	fmt.Println("Value IS : ", numberOfrowEffected)
+
+	//  If There is a user On Given Username And Passwoard then Log In
+	// Create a Session With User Info
+	// Redirect
+	var id string
+	var First string
+	var Last string
+	var Desig string
+	var area string
+	var Postc string
+
+	if numberOfrowEffected == 1 {
+		userdetails, erruserdata := db.Prepare("SELECT user.id, user.FirstName,  user.LastName, user.Designation,  user.Area,  user.Postcode FROM  user  WHERE Username=? AND Password=?  ")
+		if erruserdata != nil {
+			fmt.Println("ERROR Gatting User Info : ", erruserdata)
+		}
+		userdetails.QueryRow("javed", "123456").Scan(&id, &First, &Last, &Desig, &area, &Postc)
+		// Session Starts
+		sess, _ := session.Get("session", c)
+		sess.Options = &sessions.Options{
+			Path:     "/",
+			MaxAge:   86400 * 7,
+			HttpOnly: true,
+		}
+		sess.Values["foo"] = "bar"
+		sess.Save(c.Request(), c.Response())
+
+	}
+
+	fmt.Println("id is :", id)
+	fmt.Println("First Name  is :", First)
+	fmt.Println("Last Name :", Last)
+	fmt.Println("Designation  is :", Desig)
+	fmt.Println("area is :", area)
+	fmt.Println("Postc is :", Postc)
+
+	// Reading Session Value Starts
+	session, err := session.Get("session", c)
+	if err != nil {
+		fmt.Println("Err : No Session Found ")
+	}
+	fmt.Println("Session Value Is : ", session.Values["foo"])
+
+	// Get the previous flashes, if any.
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		// Use the flash values.
+	} else {
+		// Set a new flash.
+		session.AddFlash("Hello, flash messages world!")
+	}
+	session.Save(c.Request(), c.Response())
+
+	fmt.Println("Session Value 2  Is : ", session.Values["foo"])
+	//
+	// Help http://www.gorillatoolkit.org/pkg/sessions
+	//https://github.com/gorilla/sessions#store-implementations
+	// https://echo.labstack.com/middleware/session
+
+	return c.String(http.StatusOK, "what up Man , User name Mached Or Not ?")
+
+}
