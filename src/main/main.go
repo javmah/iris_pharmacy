@@ -387,13 +387,72 @@ func main() {
 	})
 
 	// 9. Orders
+	// app.Get("/orders", func(ctx iris.Context) {
+	// 	// Check if user is authenticated Starts
+	// 	// if auth, _ := sess.Start(ctx).GetBoolean("authenticated"); !auth {
+	// 	// 	ctx.Redirect("/signin")
+	// 	// 	return
+	// 	// }
+	// 	// Check if user is authenticated Ends
+	// 	ctx.View("orders.html")
+	// })
+
 	app.Get("/orders", func(ctx iris.Context) {
-		// Check if user is authenticated Starts
-		// if auth, _ := sess.Start(ctx).GetBoolean("authenticated"); !auth {
-		// 	ctx.Redirect("/signin")
-		// 	return
-		// }
-		// Check if user is authenticated Ends
+
+		type product struct {
+			Id        int
+			OrderId   int
+			Productid int
+			Qty       int
+			Price     int
+		}
+		type orders struct {
+			Id           int
+			UserId       int
+			FirstName    string
+			OrderDate    string
+			DeliveryDate string
+			Products     []product
+		}
+
+		// Databsae
+		db, dbconnerr := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/medicine")
+		if dbconnerr != nil {
+			fmt.Println("Hmm err :", dbconnerr)
+		}
+
+		rows, err := db.Query("SELECT orders.Id , orders.UserId, user.FirstName , orders.OrderDate , orders.DeliveryDate FROM orders INNER JOIN user ON orders.UserId = user.id ORDER BY orders.Id ASC")
+		if err != nil {
+			fmt.Println("Hmm err :", err)
+		}
+		// Start faching Data
+		var Results []orders
+		for rows.Next() {
+			order := orders{}
+			err2 := rows.Scan(&order.Id, &order.UserId, &order.FirstName, &order.OrderDate, &order.DeliveryDate)
+			if err2 != nil {
+				panic(err2)
+			}
+			// Gatting Order Items
+			itemrows, erritems := db.Query("SELECT * FROM `order_items` WHERE OrderId = ?", order.Id)
+			if erritems != nil {
+				println("ERR: Error Gatting Item  ")
+			}
+			for itemrows.Next() {
+				Items := product{}
+				itemrows.Scan(
+					&Items.Id,
+					&Items.OrderId,
+					&Items.Productid,
+					&Items.Qty,
+					&Items.Price,
+				)
+				order.Products = append(order.Products, Items)
+				// fmt.Println(Items)
+			}
+			Results = append(Results, order)
+		}
+		ctx.ViewData("result", Results)
 		ctx.View("orders.html")
 	})
 
@@ -522,83 +581,6 @@ func main() {
 	// })
 
 	app.Get("/test", func(ctx iris.Context) {
-		// session.Set("id", id)
-		// session.Set("Firstname", First)
-		// session.Set("Lastname", Last)
-		// session.Set("Desig", Desig)
-		// session.Set("Area", area)
-		// session.Set("Postc", Postc)
-
-		// sessiondataid := sess.Start(ctx).GetString("id")
-		// sessiondataname := sess.Start(ctx).GetString("Firstname")
-
-		// fmt.Println("Session ID is :", sessiondataid)
-		// fmt.Println("Session Name :", sessiondataname)
-
-		// userid := ctx.PostValue("ID")
-		// fmt.Println(userid)
-
-		type product struct {
-			Id        int
-			OrderId   int
-			Productid int
-			Qty       int
-			Price     int
-		}
-
-		type orders struct {
-			Id           int
-			UserId       int
-			OrderDate    string
-			DeliveryDate string
-			Products     []product
-		}
-
-		// Databsae
-		db, dbconnerr := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/medicine")
-		if dbconnerr != nil {
-			fmt.Println("Hmm err :", dbconnerr)
-		}
-		// rows, err := db.Query("SELECT  orders.Id, GROUP_CONCAT(order_items.Id) AS products_list FROM orders , order_items  WHERE orders.Id = order_items.OrderId GROUP BY order_items.OrderId ORDER BY orders.Id ")
-		rows, err := db.Query("SELECT * FROM  orders ")
-		if err != nil {
-			fmt.Println("Hmm err :", err)
-		}
-		// Start faching Data
-		var Results []orders
-		for rows.Next() {
-			order := orders{}
-			err2 := rows.Scan(&order.Id, &order.UserId, &order.OrderDate, &order.DeliveryDate)
-			if err2 != nil {
-				panic(err2)
-			}
-			// Gatting Order Items
-			// var holder []product
-			itemrows, erritems := db.Query("SELECT * FROM `order_items` WHERE OrderId = ?", order.Id)
-			if erritems != nil {
-				println("ERR: Error Gatting Item  ")
-			}
-			for itemrows.Next() {
-				Items := product{}
-				itemrows.Scan(
-					&Items.Id,
-					&Items.OrderId,
-					&Items.Productid,
-					&Items.Qty,
-					&Items.Price,
-				)
-				order.Products = append(order.Products, Items)
-				// fmt.Println(Items)
-			}
-
-			Results = append(Results, order)
-		}
-		fmt.Println(Results)
-		ctx.ViewData("result", Results)
-		ctx.View("orders.html")
-	})
-
-	app.Get("/testX", func(ctx iris.Context) {
 		// session.Set("id", id)
 		// session.Set("Firstname", First)
 		// session.Set("Lastname", Last)
