@@ -249,18 +249,7 @@
                     <div class="clearfix"></div>
                   </div>
                   <div class="x_content">
-                    <!-- Starts -->
-                    <ul>
-                      {{range .result }}
-                          <li> {{.Id}} # {{.UserId}} # {{.FirstName}} #{{ .OrderDate}} # {{.DeliveryDate}} #  </li>
-                          <ul>
-                            {{range .Products }}
-                             <li> {{ .Id  }}  @   {{ .OrderId  }}  @  {{ .Productid  }}  @  {{ .Qty  }}  @  {{ .Price  }}  </li>
-                            {{end}}
-                           </ul>
-                      {{end}}
-                    </ul>
-                    <!-- Ends -->
+
 
                     <table class="table table-striped">
                       <thead>
@@ -273,38 +262,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <th scope="row">1</th>
-                          <td>Mark</td>
-                          <td>Otto</td>
-                          <td>@mdo</td>
-                          <td>@mdo</td>
-                        </tr>
-
-                        <tr>
-                          <th scope="row">1  </th>
-                          <td>
-                            user id <br>
-                            User name  <br>
-                            Order date <br>
-                            Delivery Date
-
-                          </td>
-                          <!-- Product info st -->
-                          <td>
-                            Product id <br>
-                            Qty <br>
-                            Price<br>
-                          </td> 
-                          <!-- Product info en -->
-                          <!-- total Oder Price -->
-                          <td> 420 </td>
-                           <!-- total Oder Price -->
-                          <!-- Active -->
-                          <td> Active </td>
-                          <!-- Active ed -->
-                        </tr>
-                        
+                    
                         {{range .result }}
                         <tr>
                             <th scope="row">{{.Id}}  </th>
@@ -341,14 +299,7 @@
                           <td>@mdo</td>
                           <td>@mdo</td>
                         </tr>
-
-                        <tr>
-                          <th scope="row">1</th>
-                          <td>Mark</td>
-                          <td>Otto</td>
-                          <td>@mdo</td>
-                          <td>@mdo</td>
-                        </tr>
+                        
                       </tbody>
                     </table>
 
