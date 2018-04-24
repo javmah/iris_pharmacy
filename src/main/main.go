@@ -400,11 +400,11 @@ func main() {
 	app.Get("/orders", func(ctx iris.Context) {
 
 		type product struct {
-			Id        int
-			OrderId   int
-			Productid int
-			Qty       int
-			Price     int
+			OrderId    int
+			Productid  int
+			TradeNames string
+			Qty        int
+			Price      int
 		}
 		type orders struct {
 			Id           int
@@ -434,16 +434,16 @@ func main() {
 				panic(err2)
 			}
 			// Gatting Order Items
-			itemrows, erritems := db.Query("SELECT * FROM `order_items` WHERE OrderId = ?", order.Id)
+			itemrows, erritems := db.Query("SELECT order_items.OrderId , order_items.Productid , medicinelist.TradeNames , order_items.Qty, order_items.Price   FROM order_items INNER JOIN medicinelist ON order_items.Productid = medicinelist.id WHERE order_items.OrderId = ? ORDER BY order_items.Productid ASC", order.Id)
 			if erritems != nil {
 				println("ERR: Error Gatting Item  ")
 			}
 			for itemrows.Next() {
 				Items := product{}
 				itemrows.Scan(
-					&Items.Id,
 					&Items.OrderId,
 					&Items.Productid,
+					&Items.TradeNames,
 					&Items.Qty,
 					&Items.Price,
 				)
@@ -554,6 +554,39 @@ func main() {
 
 	//11. Reports
 	app.Get("/reports", func(ctx iris.Context) {
+		type qty struct {
+			Id         int
+			TradeNames string
+			QTY        int
+			TotalPrice int
+		}
+		// Databsae
+		db, dbconnerr := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/medicine")
+		if dbconnerr != nil {
+			fmt.Println("ERR:DB Connection error : ", dbconnerr)
+		}
+		//
+		itemrows, erritems := db.Query("SELECT medicinelist.id ,medicinelist.TradeNames , SUM(order_items.Qty) AS QTY , SUM(order_items.Price) as TotalPrice FROM medicinelist , order_items ,orders WHERE medicinelist.id = order_items.Productid AND orders.Id = order_items.OrderId AND orders.OrderDate = '2018-04-17 20:08:35' GROUP BY medicinelist.id")
+
+		if erritems != nil {
+			println("ERR : error While Gatting Product :", erritems)
+		}
+
+		var results []qty
+
+		for itemrows.Next() {
+			Items := qty{}
+			itemrows.Scan(
+				&Items.Id,
+				&Items.TradeNames,
+				&Items.QTY,
+				&Items.TotalPrice,
+			)
+			results = append(results, Items)
+		}
+
+		fmt.Println(results)
+		ctx.ViewData("result", results)
 		ctx.View("reports.html")
 	})
 
