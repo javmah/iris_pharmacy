@@ -15,6 +15,8 @@ import (
 	"github.com/kataras/iris/sessions"
 
 	_ "github.com/go-sql-driver/mysql"
+	// Jwt
+	//"github.com/dgrijalva/jwt-go"
 )
 
 var (
@@ -695,7 +697,6 @@ func main() {
 	// API Srarts From heare ..................................................................................................................
 	app.Get("/api/list", ApiList)
 	app.Post("/api/order", ApiOrder)
-
 	// API ENDs From heare ....................................................................................................................
 
 	// Running server
@@ -838,4 +839,13 @@ func ApiOrder(ctx iris.Context) {
 	ctx.JSON(hmm)
 }
 
-// Handler Functions   Started Here .
+// .................................................................. Desclamiers ......................................................
+
+/*
+1. Need to Add JWT
+2. Need to Add Validation
+3. Need to Refactoring The Code
+
+Note : This Ends heare   ...... I will Mode In Another Project Now !!!!
+
+*/
